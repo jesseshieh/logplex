@@ -22,23 +22,42 @@ clean:
   image: logplex_base
   volumes_from:
     - base
-logplex:
+logplex1:
   image: logplex_base
   command: ./_build/default/rel/logplex/bin/logplex foreground
-  hostname: logplex
-  domainname: docker.local
+  hostname: 172.17.0.3
+  # domainname: 172.17.0.3
   environment:
-    - INSTANCE_NAME=logplex.docker.local
+    - INSTANCE_NAME=logplex1
     - LOCAL_IP=127.0.0.1
   env_file:
     - logplex.env
   volumes_from:
     - base
-  ports:
-    - "8001:8001"
-    - "8002:8002"
-    - "8601:8601"
-    - "6001:6001"
+  # ports:
+  # - "8001:8001"
+  # - "8002:8002"
+  # - "8601:8601"
+  # - "6001:6001"
+  links:
+    - db
+logplex2:
+  image: logplex_base
+  command: ./_build/default/rel/logplex/bin/logplex foreground
+  hostname: 172.17.0.4
+  # domainname: 172.17.0.4
+  environment:
+    - INSTANCE_NAME=logplex2
+    - LOCAL_IP=127.0.0.1
+  env_file:
+    - logplex.env
+  volumes_from:
+    - base
+  # ports:
+  # - "8001:8001"
+  # - "8002:8002"
+  # - "8601:8601"
+  # - "6001:6001"
   links:
     - db
 test:

@@ -1,0 +1,3 @@
+#!/bin/bash
+url=$(curl -d '{"channel_id": "1", "tail": true}' http://local:password@172.17.0.3:8001/v2/sessions | jq -r '.url')
+curl http://local:password@172.17.0.3:8001${url}

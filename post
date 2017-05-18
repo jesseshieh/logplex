@@ -1,0 +1,8 @@
+#!/bin/bash
+curl -v \
+-H "Content-Type: application/logplex-1" \
+-H "Logplex-Msg-Count: 1" \
+-d "116 <134>1 2012-12-10T03:00:48.123456Z erlang t.e70851b7-6ede-422e-aae8-c2b6bfa597d6 console.1 - - Logsplat test message 1" \
+http://local:password@172.17.0.4:8601/logs
+
+# echo 1 | /home/vagrant/Development/go/src/github.com/heroku/log-shuttle/.docker_build/log-shuttle -logs-url=http://token:t.e70851b7-6ede-422e-aae8-c2b6bfa597d6@172.17.0.4:8601/logs -appname appname -hostname hostname -procid procid
