@@ -99,13 +99,14 @@ steps outlined docs.docker.com.
 ```
 docker-compose build         # Run once
 docker-compose run compile   # Run everytime source files change
-docker-compose up logplex    # Run logplex post-compilation
+docker-compose up logplex1 logplex2    # Run logplex post-compilation
 ```
 
 To connect to the above logplex Erlang shell:
 
 ```
-docker exec -it logplex_logplex_1 bash -c "TERM=xterm bin/connect"
+docker exec -it logplex_logplex1_1 bash -c "TERM=xterm bin/connect"
+docker exec -it logplex_logplex2_1 bash -c "TERM=xterm bin/connect"
 ```
 
 ### test
@@ -117,17 +118,20 @@ docker exec -it logplex_logplex_1 bash -c "TERM=xterm bin/connect"
 create creds
 
 
-    1> logplex_cred:store(logplex_cred:grant('full_api', logplex_cred:grant('any_channel', logplex_cred:rename(<<"Local-Test">>, logplex_cred:new(<<"local">>, <<"password">>))))).
-    ok
+    logplex_cred:store(logplex_cred:grant('full_api', logplex_cred:grant('any_channel', logplex_cred:rename(<<"Local-Test">>, logplex_cred:new(<<"local">>, <<"password">>))))).
+
+connect second node (does it connect automatically? seems to..)
+
+    net_adm:ping('logplex@10.5.0.5').
 
 hit healthcheck
 
-    $ curl http://local:password@localhost:8001/healthcheck
+    $ curl http://local:password@10.5.0.4:8001/healthcheck
     {"status":"normal"}
 
 create a channel
 
-    $ curl -d '{"tokens": ["app"]}' http://local:password@localhost:8001/channels
+    $ curl -d '{"tokens": ["app"]}' http://local:password@10.5.0.4:8001/channels
     {"channel_id":1,"tokens":{"app":"t.feff49f1-4d55-4c9e-aee1-2d2b10e69b42"}}
 
 post a log msg
@@ -136,16 +140,16 @@ post a log msg
     -H "Content-Type: application/logplex-1" \
     -H "Logplex-Msg-Count: 1" \
     -d "116 <134>1 2012-12-10T03:00:48.123456Z erlang t.feff49f1-4d55-4c9e-aee1-2d2b10e69b42 console.1 - - Logsplat test message 1" \
-    http://local:password@localhost:8601/logs
+    http://local:password@10.5.0.4:8601/logs
 
 create a log session
 
-    $ curl -d '{"channel_id": "1"}' http://local:password@localhost:8001/v2/sessions
+    $ curl -d '{"channel_id": "1"}' http://local:password@10.5.0.5:8001/v2/sessions
     {"url":"/sessions/9d53bf70-7964-4429-a589-aaa4df86fead"}
 
 fetch logs for session
 
-    $ curl http://local:password@localhost:8001/sessions/9d53bf70-7964-4429-a589-aaa4df86fead
+    $ curl http://local:password@10.5.0.5:8001/sessions/9d53bf70-7964-4429-a589-aaa4df86fead
     2012-12-10T03:00:48Z+00:00 app[console.1]: test message 1
 
 # Supervision Tree

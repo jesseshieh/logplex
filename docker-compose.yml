@@ -1,103 +1,124 @@
-data:
-  image: redis:2.6
-  command: /bin/true
-db:
-  image: redis:2.6
-  command: redis-server
-  volumes_from:
-    - data
-base:
-  command: /bin/true
-  build: .
-  volumes:
-    - ./:/usr/src/app
-    - /usr/src/app/_build
-compile:
-  command: env REBAR=rebar3 make compile
-  image: logplex_base
-  volumes_from:
-    - base
-clean:
-  command: env REBAR=rebar3 make clean
-  image: logplex_base
-  volumes_from:
-    - base
-logplex1:
-  image: logplex_base
-  command: ./_build/default/rel/logplex/bin/logplex foreground
-  hostname: 172.17.0.3
-  # domainname: 172.17.0.3
-  environment:
-    - INSTANCE_NAME=logplex1
-    - LOCAL_IP=127.0.0.1
-  env_file:
-    - logplex.env
-  volumes_from:
-    - base
-  # ports:
-  # - "8001:8001"
-  # - "8002:8002"
-  # - "8601:8601"
-  # - "6001:6001"
-  links:
-    - db
-logplex2:
-  image: logplex_base
-  command: ./_build/default/rel/logplex/bin/logplex foreground
-  hostname: 172.17.0.4
-  # domainname: 172.17.0.4
-  environment:
-    - INSTANCE_NAME=logplex2
-    - LOCAL_IP=127.0.0.1
-  env_file:
-    - logplex.env
-  volumes_from:
-    - base
-  # ports:
-  # - "8001:8001"
-  # - "8002:8002"
-  # - "8601:8601"
-  # - "6001:6001"
-  links:
-    - db
-test:
-  image: logplex_base
-  command: make test
-  hostname: logplex
-  domainname: docker.local
-  extra_hosts:
-    - "server:127.0.0.1"
-    - "evilserver:127.0.0.1"
-  environment:
-    - INSTANCE_NAME=logplex.docker.local
-    - LOCAL_IP=127.0.0.1
-  volumes:
-    - ./test:/usr/src/app/test
-    - ./logs:/usr/src/app/logs
-    - ./logplex.spec:/usr/src/app/logplex.spec
-  volumes_from:
-    - base
-  links:
-    - db
-# for quicker test development, allow a shell.  note that you'll need
-# to run `epmd &` manually before you run tests.
-test_bash:
-  image: logplex_base
-  command: bash
-  hostname: logplex
-  domainname: docker.local
-  extra_hosts:
-    - "server:127.0.0.1"
-    - "evilserver:127.0.0.1"
-  environment:
-    - INSTANCE_NAME=logplex.docker.local
-    - LOCAL_IP=127.0.0.1
-  volumes:
-    - ./test:/usr/src/app/test
-    - ./logs:/usr/src/app/logs
-    - ./logplex.spec:/usr/src/app/logplex.spec
-  volumes_from:
-    - base
-  links:
-    - db
-
+version: '2'
+services:
+  data:
+    image: redis:2.6
+    command: /bin/true
+  db:
+    image: redis:2.6
+    command: redis-server
+    volumes_from:
+      - data
+    networks:
+      vpcbr:
+        ipv4_address: 10.5.0.2
+  base:
+    command: /bin/true
+    build: .
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/_build
+  logplex1:
+    image: logplex_base
+    command: ./_build/default/rel/logplex/bin/logplex foreground
+    # hostname: 172.17.0.3
+    hostname: 10.5.0.4
+    # domainname: docker.local
+    # domainname: 172.17.0.3
+    environment:
+      - INSTANCE_NAME=logplex1
+      - LOCAL_IP=127.0.0.1
+    env_file:
+      - logplex.env
+    volumes_from:
+      - base
+    # ports:
+    # - "8001:8001"
+    # - "8002:8002"
+    # - "8601:8601"
+    # - "6001:6001"
+    links:
+      - db
+    networks:
+      vpcbr:
+        ipv4_address: 10.5.0.4
+  logplex2:
+    image: logplex_base
+    command: ./_build/default/rel/logplex/bin/logplex foreground
+    # hostname: 172.17.0.4
+    hostname: 10.5.0.5
+    # domainname: 172.17.0.4
+    # domainname: docker.local
+    environment:
+      - INSTANCE_NAME=logplex2
+      - LOCAL_IP=127.0.0.1
+    env_file:
+      - logplex.env
+    volumes_from:
+      - base
+    # ports:
+    # - "8001:8001"
+    # - "8002:8002"
+    # - "8601:8601"
+    # - "6001:6001"
+    links:
+      - db
+    networks:
+      vpcbr:
+        ipv4_address: 10.5.0.5
+  compile:
+    command: env REBAR=rebar3 make compile
+    image: logplex_base
+    volumes_from:
+      - base
+  clean:
+    command: env REBAR=rebar3 make clean
+    image: logplex_base
+    volumes_from:
+      - base
+  test:
+    image: logplex_base
+    command: make test
+    hostname: logplex
+    domainname: docker.local
+    extra_hosts:
+      - "server:127.0.0.1"
+      - "evilserver:127.0.0.1"
+    environment:
+      - INSTANCE_NAME=logplex.docker.local
+      - LOCAL_IP=127.0.0.1
+    volumes:
+      - ./test:/usr/src/app/test
+      - ./logs:/usr/src/app/logs
+      - ./logplex.spec:/usr/src/app/logplex.spec
+    volumes_from:
+      - base
+    links:
+      - db
+  # for quicker test development, allow a shell.  note that you'll need
+  # to run `epmd &` manually before you run tests.
+  test_bash:
+    image: logplex_base
+    command: bash
+    hostname: logplex
+    domainname: docker.local
+    extra_hosts:
+      - "server:127.0.0.1"
+      - "evilserver:127.0.0.1"
+    environment:
+      - INSTANCE_NAME=logplex.docker.local
+      - LOCAL_IP=127.0.0.1
+    volumes:
+      - ./test:/usr/src/app/test
+      - ./logs:/usr/src/app/logs
+      - ./logplex.spec:/usr/src/app/logplex.spec
+    volumes_from:
+      - base
+    links:
+      - db
+networks:
+  vpcbr:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
