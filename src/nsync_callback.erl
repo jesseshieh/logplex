@@ -99,8 +99,16 @@ handle({cmd, "del", []}) ->
     ok;
 handle({cmd, "del", [<<"ch:", Suffix/binary>> | Args]}) ->
     Id = parse_id(Suffix),
-    ?INFO("at=delete type=channel id=~s", [Id]),
-    ets:delete(channels, Id),
+    Subkey = parse_subkey(Suffix),
+    ?INFO("at=delete type=channel id=~s subkey=~s", [Id, Subkey]),
+    case Subkey of
+      "data" ->
+        ets:delete(channels, Id);
+      "spool" ->
+        ok;
+      _ ->
+        ok
+    end,
     handle({cmd, "del", Args});
 handle({cmd, "del", [<<"tok:", Suffix/binary>> | Args]}) ->
     Id = parse_id(Suffix),
@@ -285,6 +293,10 @@ drain_uri(Dict) ->
 parse_id(Bin) ->
     [Id | _] = binary:split(Bin, <<":">>),
     Id.
+
+parse_subkey(Bin) ->
+    [_ | Subkey] = binary:split(Bin, <<":">>),
+    Subkey.
 
 dict_from_list(List) ->
     dict_from_list(List, dict:new()).
